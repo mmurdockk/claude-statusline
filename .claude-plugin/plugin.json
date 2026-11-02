@@ -1,0 +1,23 @@
+{
+  "name": "clawdline",
+  "description": "A three-line status bar for Claude Code: Clawd animated, GitHub PR / GitLab MR with live CI status, context and 5h/7d quotas with pace. POSIX sh + jq, no runtime.",
+  "version": "1.1.0",
+  "author": {
+    "name": "Adrien Gooris",
+    "url": "https://github.com/mmurdockk"
+  },
+  "homepage": "https://github.com/mmurdockk/claude-statusline",
+  "repository": "https://github.com/mmurdockk/claude-statusline",
+  "license": "MIT",
+  "keywords": [
+    "statusline",
+    "statusbar",
+    "clawd",
+    "github",
+    "gitlab",
+    "ci",
+    "pipeline",
+    "rate-limits",
+    "powerline"
+  ]
+}

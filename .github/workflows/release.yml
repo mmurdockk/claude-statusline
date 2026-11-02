@@ -17,6 +17,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Tag matches the plugin version
+        run: |
+          v="v$(jq -r .version .claude-plugin/plugin.json)"
+          if [ "$v" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME but .claude-plugin/plugin.json says $v"
+            exit 1
+          fi
       - run: sh tools/test.sh
       - name: Package
         run: |
@@ -26,13 +33,13 @@ jobs:
       - name: Create GitHub release
         run: |
           cat > notes.md <<'NOTES'
-          **Install or update** (re-running it is safe):
+          **Install or update** the Claude Code plugin, then run `/clawdline:setup` once:
 
           ```bash
-          curl -fsSL https://raw.githubusercontent.com/mmurdockk/claude-statusline/main/install.sh | sh
+          claude plugin install clawdline --marketplace mmurdockk/claude-statusline
           ```
 
-          Already installed? `git -C ~/.claude/claude-statusline pull` is all it takes.
+          Without the plugin system: `curl -fsSL https://raw.githubusercontent.com/mmurdockk/claude-statusline/main/install.sh | sh`
           NOTES
           gh release create "$GITHUB_REF_NAME" claude-statusline-*.tar.gz* \
             --title "$GITHUB_REF_NAME" \

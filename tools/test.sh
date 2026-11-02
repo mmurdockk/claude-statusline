@@ -19,7 +19,7 @@ has()  { case $1 in *"$2"*) return 0 ;; esac; return 1; }
 
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/claude-statusline-test.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
-SCRIPTS="statusline.sh statusline-turn.sh install.sh tools/demo.sh tools/test.sh"
+SCRIPTS="statusline.sh statusline-turn.sh install.sh hooks/link.sh tools/demo.sh tools/test.sh"
 
 echo "syntax"
 for f in $SCRIPTS; do
@@ -99,6 +99,30 @@ check "uninstall removes the status line"   '.statusLine == null'
 check "uninstall removes only its hooks"    '(.hooks | keys) == ["Stop"] and ([.hooks.Stop[].hooks[].command] == ["say done"])'
 check "uninstall keeps unrelated settings"  '.model == "opus"'
 if [ "$(find "$conf" -name 'settings.json.bak-*' | wc -l | tr -d ' ')" -ge 1 ]; then ok "backs settings.json up"; else ko "no backup written"; fi
+
+echo "plugin"
+P="$ROOT/.claude-plugin"
+if jq -e --slurpfile m "$P/marketplace.json" '
+     .name == "clawdline" and $m[0].name == .name and $m[0].plugins[0].name == .name
+     and $m[0].plugins[0].source == "./" and $m[0].metadata.version == .version' "$P/plugin.json" >/dev/null 2>&1
+then ok "manifests agree: clawdline $(jq -r .version "$P/plugin.json")"; else ko "plugin.json and marketplace.json disagree"; fi
+missing=$(jq -r '.hooks[][].hooks[].command' "$ROOT/hooks/hooks.json" \
+  | sed -n 's#.*${CLAUDE_PLUGIN_ROOT}/\([^"]*\)".*#\1#p' | while read -r f; do [ -f "$ROOT/$f" ] || echo "$f"; done)
+if [ -z "$missing" ]; then ok "every hook script exists"; else ko "hooks point at missing files: $missing"; fi
+for sk in setup uninstall; do
+  if [ -f "$ROOT/skills/$sk/SKILL.md" ]; then ok "skill /clawdline:$sk"; else ko "missing skill $sk"; fi
+done
+pc="$tmp/pconf"; mkdir -p "$pc"
+_o=$(CLAUDE_CONFIG_DIR="$pc" CLAUDE_PLUGIN_ROOT="$ROOT" "$SH" "$ROOT/hooks/link.sh")
+if [ -z "$_o" ] && [ "$(readlink "$pc/plugins/clawdline/current")" = "$ROOT" ]; then ok "SessionStart hook links the plugin, silently"
+else ko "SessionStart hook: output \"$_o\", link $(readlink "$pc/plugins/clawdline/current")"; fi
+CLAUDE_CONFIG_DIR="$pc" "$SH" "$ROOT/install.sh" >/dev/null 2>&1          # an earlier script install
+CLAUDE_CONFIG_DIR="$pc" "$SH" "$ROOT/install.sh" --plugin >/dev/null 2>&1 || ko "setup exited non-zero"
+s=$(cat "$pc/settings.json")
+check "setup points the status line at the stable link" ".statusLine.command | endswith(\"plugins/clawdline/current/statusline.sh'\")"
+check "setup leaves no hook in settings.json"           '[.hooks[]?[]?.hooks[]?.command | select(contains("statusline-turn.sh"))] | length == 0'
+CLAUDE_CONFIG_DIR="$pc" "$SH" "$ROOT/install.sh" --uninstall >/dev/null 2>&1
+if [ ! -e "$pc/plugins/clawdline" ]; then ok "uninstall removes the link"; else ko "uninstall left the link behind"; fi
 
 echo
 if [ "$fails" -eq 0 ]; then echo "all good"; else echo "$fails failure(s)"; exit 1; fi

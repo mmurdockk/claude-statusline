@@ -1,0 +1,27 @@
+{
+  "name": "clawdline",
+  "owner": {
+    "name": "Adrien Gooris",
+    "url": "https://github.com/mmurdockk"
+  },
+  "metadata": {
+    "description": "clawdline: an animated Clawd, GitHub / GitLab CI status and quota pace in your Claude Code status bar",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "clawdline",
+      "source": "./",
+      "description": "Three-line status bar: Clawd reacts to what Claude is doing, your GitHub PR or GitLab MR shows with its live CI status, and context / 5h / 7d gauges tell you how fast you burn your quota. Run /clawdline:setup after installing.",
+      "category": "productivity",
+      "tags": [
+        "statusline",
+        "clawd",
+        "github",
+        "gitlab",
+        "ci",
+        "rate-limits"
+      ]
+    }
+  ]
+}

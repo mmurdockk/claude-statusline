@@ -1,102 +1,109 @@
-# claude-statusline
+<div align="center">
 
-A three-line status bar for [Claude Code](https://docs.claude.com/en/docs/claude-code) that answers,
-at a glance: **where am I, what is Claude doing, and how much do I have left?**
-It also knows about your pull request: the open **GitHub PR or GitLab MR** for your branch, its review state
-and its **live CI status**, right next to the model.
-And it has Clawd, the Claude Code mascot, walking, thinking, dozing off and partying next to it.
+<img src=".claude-plugin/icon.png" width="88" alt="">
 
-![claude-statusline: Clawd idle, thinking, running a tool, celebrating a commit and dozing off](docs/clawd.gif)
+# clawdline
 
-## Install in 30 seconds
+**The status bar Claude Code deserves.**<br>
+Clawd lives in it. Your PR's CI status glows in it. Your quotas stop taking you by surprise.
+
+[![Release](https://img.shields.io/github/v/release/mmurdockk/claude-statusline?color=d77757)](https://github.com/mmurdockk/claude-statusline/releases)
+[![CI](https://github.com/mmurdockk/claude-statusline/actions/workflows/ci.yml/badge.svg)](https://github.com/mmurdockk/claude-statusline/actions/workflows/ci.yml)
+[![Claude Code plugin](https://img.shields.io/badge/Claude_Code-plugin-d77757)](#-install)
+[![GitHub & GitLab](https://img.shields.io/badge/GitHub_%26_GitLab-PR%2FMR_%2B_CI-6e40c9)](#-github--gitlab-pr-and-live-ci)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+<img src="docs/clawd.gif" alt="clawdline: Clawd idle, thinking, running a tool, celebrating a commit and dozing off" width="100%">
+
+</div>
+
+## ✨ Highlights
+
+### 🦀 Clawd, alive in your terminal
+
+Clawd, the Claude Code mascot, reacts to what Claude is doing, second by second. He **ponders** while the model
+thinks, **walks** while a tool runs, **dances** the moment you commit, **dozes off** when you step away, and
+**sweats** as you get close to a limit. His colour doubles as the bar's warning light: terracotta while all is
+well, amber past 50 %, red past 80 %.
+
+### 🔀 GitHub & GitLab: PR and live CI
+
+Your open **pull request** (`#42`) or **merge request** (`!42`) sits right next to the model, with its review
+state (`approved`, `changes`, `draft`) and its **CI status, live**:
+
+| `✓` passed | `✗` failed | `◐` running | `◌` pending | `▶` manual | `⊘` canceled / skipped |
+|---|---|---|---|---|---|
+
+No PR yet? You still see the latest workflow run or pipeline of your branch. GitHub goes through `gh`, GitLab
+(gitlab.com or self-hosted) through `glab`. Both are queried in the background, so the bar never waits on the network.
+
+### 📊 Know what you have left
+
+Context window, 5-hour and 7-day quotas as gauges, each with its **pace**: `▲12` means you are burning the quota
+12 points faster than it refills, `▼20` means you are coasting. Plus the session cost and its hourly burn rate.
+
+### ⚡ No runtime to install
+
+Plain POSIX `sh` and `jq`: no Node, no Python, no binary to download. About two processes per render, overlapped,
+because it runs every second.
+
+## 🚀 Install
+
+**From your terminal**, in one step:
+
+```bash
+claude plugin install clawdline --marketplace mmurdockk/claude-statusline
+```
+
+**Or inside Claude Code:**
+
+```
+/plugin marketplace add mmurdockk/claude-statusline
+/plugin install clawdline@clawdline
+```
+
+Then, in a Claude Code session, run **`/reload-plugins`** (if the plugin was installed during that session) and
+**`/clawdline:setup`**, which points your status line at clawdline. That's it.
+
+You need `jq` and a [Nerd Font](https://www.nerdfonts.com/) in your terminal
+(`brew install jq && brew install --cask font-hack-nerd-font`). For the CI status, have `gh` and/or `glab` installed and logged in.
+
+<details>
+<summary><b>Without the plugin system</b> (one curl, hooks written to <code>settings.json</code>)</summary>
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mmurdockk/claude-statusline/main/install.sh | sh
 ```
 
-**Or with plain git**, if you'd rather read the script before running it:
+It clones the repo into `~/.claude/claude-statusline` and wires the status line and its hooks into
+`~/.claude/settings.json` (backed up first). Update with `git -C ~/.claude/claude-statusline pull`,
+remove with `~/.claude/claude-statusline/install.sh --uninstall`.
+</details>
 
-```bash
-git clone https://github.com/mmurdockk/claude-statusline.git ~/.claude/claude-statusline && ~/.claude/claude-statusline/install.sh
-```
+<details>
+<summary><b>Update / uninstall the plugin</b></summary>
 
-Then open a new Claude Code session. That's it.
+- **Update:** `/plugin`, then **Marketplaces → clawdline → Enable auto-update**, or by hand:
+  `claude plugin marketplace update clawdline && claude plugin update clawdline@clawdline`. No need to run setup again.
+- **Uninstall:** run `/clawdline:uninstall` first, which removes the status line from your settings, then
+  `/plugin uninstall clawdline@clawdline`.
+</details>
 
-Both commands end up in the same place. The script clones the repo into `~/.claude/claude-statusline`, adds the status line and
-five small hooks to `~/.claude/settings.json` (backing that file up first), checks your prerequisites and prints a
-sample render so you can check your font right away. You can run it again whenever you like, because it never adds anything twice.
+## 🖥️ What's on screen
 
-> **Even lazier:** paste this into Claude Code:
-> *"Clone https://github.com/mmurdockk/claude-statusline.git into ~/.claude/claude-statusline and run its install.sh"*
+![clawdline, full size](docs/screenshot.png)
 
-### Prerequisites
+1. **Where and what:** directory · branch with its state (the segment turns violet when clean, amber when dirty,
+   red during a conflict), age of the last commit, staged / modified / untracked counts · model, effort, fast mode ·
+   what Claude is doing right now (`Bash 14s`) · PR / MR with CI and review.
+2. **This session:** account and plan · elapsed time vs. time waiting on the API · lines added and removed ·
+   Claude Code version, with `→ x.y.z ready` when an update is waiting · session name.
+3. **What's left:** context, 5h and 7d gauges with pace and reset times · cost and burn rate. Any figure at 90 % or more blinks.
 
-| What | Why | How |
-|---|---|---|
-| macOS, Linux or WSL | it's a POSIX shell script | Windows Git Bash should work too, but nobody has tested it |
-| `jq` ≥ 1.6 | does all the parsing and maths in one pass | `brew install jq` / `apt install jq` |
-| `git` | branch and working-tree segment | you have it |
-| A [Nerd Font](https://www.nerdfonts.com/) in your terminal | icons and powerline arrows | `brew install --cask font-hack-nerd-font`, then pick *Hack Nerd Font Mono* in your terminal settings |
-| `gh` and/or `glab` *(optional)* | CI status of your GitHub PR / GitLab MR | `brew install gh && gh auth login`, `brew install glab && glab auth login` |
+<details>
+<summary><b>⚙️ Configuration</b></summary>
 
-No Nerd Font? Set `SL_NERD=0` (see [Configuration](#configuration)) to get a plain-ASCII version.
-
-### Update / uninstall
-
-```bash
-git -C ~/.claude/claude-statusline pull            # update: the scripts run straight from the clone
-~/.claude/claude-statusline/install.sh --uninstall # removes the status line and hooks, keeps your other settings
-```
-
-## What you're looking at
-
-![claude-statusline, full size](docs/screenshot.png)
-
-**Line 1: where and what**
-
-| Segment | Shows |
-|---|---|
-| 📁 directory | current dir, parents abbreviated fish-style (`~/d/g/my-squad/my-app`), `+N` if you added dirs |
-| 🌿 git | branch, age of the last commit, `+staged ±modified ?untracked`, conflicts, stash, `↑ahead ↓behind`, `✓` when clean. The segment turns **violet** when clean, **amber** when dirty and **red** during a conflict |
-| 🤖 model | model name (it shimmers while Claude is working), `1M` context, `fast` mode, effort level, `think×` when thinking is off |
-| ⚙️ activity | only shown during a turn: the spinner while Claude thinks, or the tool currently running (`Bash 14s`) |
-| 🔀 extras | GitHub PR `#42` or GitLab MR `!42`, with its CI status (`✓ ✗ ◐ ◌ ▶ ⊘`) and review state (`approved`, `changes`, `draft`); sub-agent, output style, vim mode |
-
-**Line 2: this session**: signed-in account and plan, wall-clock time vs. time spent waiting on the API, lines
-added/removed (with a little ratio bar), Claude Code version (with `→ x.y.z ready` when an update is waiting) and the session name.
-
-**Line 3: how much is left**
-
-- **ctx**: context window used, as a gauge plus how many tokens are still free. A cache hit ratio appears only when it drops below 80 %,
-  which usually means something keeps busting the prompt cache.
-- **5h / 7d**: your rate-limit windows, with **pace**: `▲12` (red) means you are burning the quota 12 points faster
-  than the window refills, `▼20` (green) means you're coasting, `▬` means you're on budget. Then the reset time.
-- **$**: API-price equivalent of the session and the hourly burn rate. On a subscription it isn't a bill.
-
-Every gauge turns red as it fills, and any figure at 90 % or above blinks.
-
-### Clawd
-
-| Clawd is… | when |
-|---|---|
-| walking 🚶 | a tool is running |
-| hand on chin, blinking 🤔 | the model is thinking |
-| standing, blinking now and then | idle |
-| asleep, `z` drifting off 💤 | idle for more than 25 s |
-| dancing, with sparkles ✨ | you committed less than 15 s ago |
-| sweating 💦 | any gauge is above 80 % |
-
-His colour is the bar's single warning light: terracotta while everything is fine, amber once any gauge passes 50 %, and red past 80 %.
-
-## Configuration
-
-Everything is optional. Set these in `~/.claude/settings.json` under `env` (or export them from your shell profile):
-
-```json
-{
-  "env": { "SL_NERD": "0", "SL_ACCOUNT": "org" }
-}
-```
+Everything is optional. Set these in `~/.claude/settings.json` under `"env"`, e.g. `"env": { "SL_NERD": "0" }`.
 
 | Variable | Default | Effect |
 |---|---|---|
@@ -105,56 +112,39 @@ Everything is optional. Set these in `~/.claude/settings.json` under `env` (or e
 | `SL_MASCOT` | `1` | `0` = no Clawd |
 | `SL_PATH` | `short` | `full` = don't abbreviate parent directories |
 | `SL_ACCOUNT` | `1` | `0` = hide the account, `org` = also show the organisation |
-| `SL_FORGE` | `1` | `0` = no CI lookup through `gh` / `glab`. The PR/MR number still shows, since Claude Code provides it |
-| `SL_TRACK` | `54,61,72` | RGB of the empty part of the gauges. It's tuned for a dark terminal, so pick something darker than your background on a light theme |
+| `SL_FORGE` | `1` | `0` = no CI lookup through `gh` / `glab` (the PR/MR number still shows: Claude Code provides it) |
+| `SL_TRACK` | `54,61,72` | RGB of the empty part of the gauges; pick something darker than your background on a light theme |
+</details>
 
-If you use vim mode, the bar already shows it, so you can hide Claude Code's own indicator by adding
-`"hideVimModeIndicator": true` inside the `statusLine` block of your settings. The installer keeps that setting.
-
-## How it works
-
-```
-Claude Code ──JSON on stdin, every second──▶ statusline.sh ──▶ 3 lines of ANSI
-     │                                           ▲
-     └─ hooks ─▶ statusline-turn.sh ─▶ $TMPDIR/statusline-turn-<session>
-        (prompt, pre/post tool, stop)            "think | tool Bash | idle"
-```
-
-- **`statusline.sh`** is the renderer. It runs every second, so it is built to be cheap. It starts `git status` in the
-  background while a **single** `jq` pass (`statusline.jq`) parses the payload and does all the maths, and everything else is
-  shell builtins. That works out to two overlapped processes per render. The age of HEAD is cached against the commit OID,
-  and the account against a 12-hour stamp.
-- **`statusline-turn.sh`** is the hook half. On its own, the payload can't tell a long think from an idle session,
-  so the hooks write down where the turn is (thinking, which tool is running, done). Sub-agent tool calls are ignored.
-- **PRs, MRs and CI.** Claude Code already sends the open PR (GitHub) or MR (GitLab) for your branch, with its review
-  state and the `origin` host, so the number costs nothing. CI status is the one thing it doesn't know: a detached background
-  job asks `gh` (checks of the open PR, or the branch's latest workflow run) or `glab` (the MR's head pipeline, or the
-  branch's latest pipeline), at most once a minute, and the render only ever reads the cached result. The CLI is picked
-  from the `origin` host, and skipped if it isn't installed. If your token has expired, you'll see `gh auth` / `glab auth` in amber.
-
-## Troubleshooting
+<details>
+<summary><b>🩺 Troubleshooting</b></summary>
 
 | Symptom | Fix |
 |---|---|
-| Boxes / `?` instead of icons | Your terminal isn't using a Nerd Font. Install one and select it, or set `SL_NERD=0` |
-| Nothing shows at all | Run `~/.claude/claude-statusline/tools/demo.sh`. If that works, check `statusLine` in `~/.claude/settings.json` and restart Claude Code |
-| `jq: error` / blank line | `jq --version` must be ≥ 1.6. With mise or asdf, make sure a real `jq` is installed (e.g. `brew install jq`) |
-| Clawd's rows look misaligned | Use the *Mono* variant of your Nerd Font (e.g. *Hack Nerd Font Mono*), not the proportional one |
-| Gauges look washed out on a light theme | Set `SL_TRACK` to a colour slightly darker than your background |
-| No PR/MR number | Claude Code shows it only while a PR/MR is *open* for the current branch; older Claude Code versions need `gh` / `glab` installed |
-| No CI status | `gh auth status` / `glab auth status`, and the `origin` remote must point to GitHub or a GitLab host (with `gitlab` in its name) |
+| Boxes or `?` instead of icons | Your terminal isn't using a Nerd Font: install one and select it, or set `SL_NERD=0` |
+| Nothing shows | Run `/clawdline:setup` again; check `statusLine` in `~/.claude/settings.json` |
+| Clawd's rows look misaligned | Use the *Mono* variant of your Nerd Font (e.g. *Hack Nerd Font Mono*) |
+| No PR / MR number | Claude Code only sends it while a PR / MR is *open* for the current branch |
+| No CI status | `gh auth status` / `glab auth status`; the `origin` remote must point to GitHub, or to a GitLab host with `gitlab` in its name |
+| `gh auth` / `glab auth` in amber | Your token expired: log in again |
+</details>
 
-## Contributing
+<details>
+<summary><b>🔧 How it works</b></summary>
 
-Issues and pull requests are welcome. CI runs `tools/test.sh` on Linux and macOS for every push and pull request.
+Claude Code pipes a JSON payload into `statusline.sh` every second. A single `jq` pass (`statusline.jq`) parses it and
+does all the maths while `git status` runs in parallel; everything else is shell builtins. Hooks
+(`statusline-turn.sh`) record what the turn is doing, which the payload alone cannot tell. PR / MR numbers and review
+states come from the payload for free; CI status comes from a detached `gh` / `glab` job, at most once a minute,
+whose result the render reads from a cache. The plugin's `SessionStart` hook keeps
+`~/.claude/plugins/clawdline/current` pointed at the installed version, so updates need no new setup.
+</details>
 
-- `tools/demo.sh [tool|think|idle|asleep|party]` renders the bar once with fake data in a throwaway sandbox.
-- `tools/test.sh` runs the test suite: shellcheck, every demo state, and install / reinstall / uninstall against a scratch config.
-- `uv run tools/screenshot.py [STATE]` regenerates `docs/screenshot.png`, and `uv run tools/animate.py` regenerates
-  `docs/clawd.gif` from twelve seconds of real renders (both need Chrome, ImageMagick and Hack Nerd Font).
-- `python3 tools/mascot-gen.py` regenerates Clawd's frames; paste its output over the `case $frame` block in `statusline.sh`.
-- Releases: bump nothing, just push a tag (`git tag v1.2.0 && git push origin v1.2.0`). The release workflow re-runs
-  the tests and publishes a GitHub release with generated notes and a tarball.
-- Keep the renderer POSIX `sh` (it runs under `dash`) and avoid adding processes to the render path, since it runs every second.
+## 🤝 Contributing
 
-Made by Adrien Gooris. Feedback and ideas are welcome in the issues. Released under the [MIT licence](LICENSE).
+Issues and pull requests are welcome. `tools/test.sh` runs the test suite (CI runs it on Linux and macOS),
+`tools/demo.sh [tool|think|idle|asleep|party]` renders the bar with fake data, and `uv run tools/animate.py` /
+`uv run tools/screenshot.py` regenerate the images. A release is just a tag: bump `version` in
+`.claude-plugin/plugin.json` and `marketplace.json`, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+MIT licensed. Made by [Adrien Gooris](https://github.com/mmurdockk).

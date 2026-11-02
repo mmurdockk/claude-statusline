@@ -1,0 +1,26 @@
+{
+  "description": "Tell the status line what the current turn is doing, and keep a version-independent path to this plugin for the statusLine command.",
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/link.sh\"", "timeout": 5 } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/statusline-turn.sh\" think", "timeout": 5 } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/statusline-turn.sh\" tool", "timeout": 5 } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/statusline-turn.sh\" think", "timeout": 5 } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/statusline-turn.sh\" think", "timeout": 5 } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/statusline-turn.sh\" idle", "timeout": 5 } ] }
+    ],
+    "StopFailure": [
+      { "hooks": [ { "type": "command", "command": "sh \"${CLAUDE_PLUGIN_ROOT}/statusline-turn.sh\" idle", "timeout": 5 } ] }
+    ]
+  }
+}

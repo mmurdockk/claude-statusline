@@ -1,9 +1,11 @@
 #!/bin/sh
-# Wire claude-statusline into Claude Code: the status line, plus the five hooks that
+# Wire claude-statusline into Claude Code: the status line, plus the six hooks that
 # tell it what the current turn is doing. Everything runs from this checkout,
 # so `git pull` is the whole update story.
 #
 #   ./install.sh               install, or repair; safe to run again
+#   ./install.sh --plugin      status line only, for the clawdline plugin, which
+#                              ships the hooks itself (run by /clawdline:setup)
 #   ./install.sh --uninstall   take out everything this script put in
 #
 # settings.json is backed up next to itself before every change.
@@ -39,8 +41,9 @@ fi
 mode=install
 case "${1:-}" in
   ""|--install) ;;
+  --plugin) mode=plugin ;;
   --uninstall|uninstall) mode=uninstall ;;
-  -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  -h|--help) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   *) die "unknown option: $1 (try --help)" ;;
 esac
 
@@ -73,12 +76,23 @@ STRIP='
 tmp="$SETTINGS.tmp.$$"
 trap 'rm -f "$tmp"' EXIT
 
+# The plugin lives in a directory per version, so its status line goes through
+# a symlink that the plugin's SessionStart hook keeps aimed at the current one.
+LINKDIR="$CONF/plugins/clawdline"
+SL="$DIR/statusline.sh"
+if [ "$mode" = plugin ]; then
+  mkdir -p "$LINKDIR" && ln -sfn "$DIR" "$LINKDIR/current"
+  SL="$LINKDIR/current/statusline.sh"
+  case $SL in *"'"*) die "the config path must not contain a single quote: $SL" ;; esac
+fi
+
 if [ "$mode" = uninstall ]; then
   jq "$STRIP"'
     clean
     | if ((.statusLine.command // "") | contains("statusline.sh")) then del(.statusLine) else . end
   ' "$SETTINGS" > "$tmp"
   mv "$tmp" "$SETTINGS"
+  if [ -L "$LINKDIR/current" ]; then rm -f "$LINKDIR/current"; rmdir "$LINKDIR" 2>/dev/null || :; fi
   ok "status line and hooks removed from $SETTINGS"
   say "backup of the previous file: $backup"
   say "restart Claude Code (or open a new session) to see the change"
@@ -91,15 +105,19 @@ case $prev in
   *) warn "replacing your current status line: $prev" ;;
 esac
 
-jq --arg sl "$SH '$DIR/statusline.sh'" \
+# In plugin mode the hooks come with the plugin: this only clears out the ones
+# an earlier script install left in settings.json, so nothing fires twice.
+addhooks=true; [ "$mode" = plugin ] && addhooks=false
+jq --arg sl "$SH '$SL'" --argjson addhooks "$addhooks" \
    --arg turn "$SH '$DIR/statusline-turn.sh'" "$STRIP"'
   def hook($ev; $state; $tools):
+    if $addhooks | not then . else
     .hooks[$ev] = ((.hooks[$ev] // [])
       + [ (if $tools then {matcher: "*"} else {} end)
-          + {hooks: [{type: "command", command: "\($turn) \($state)", timeout: 5}]} ]);
+          + {hooks: [{type: "command", command: "\($turn) \($state)", timeout: 5}]} ]) end;
   clean
   | .statusLine = ((.statusLine // {}) + {type: "command", command: $sl, refreshInterval: 1})
-  | .hooks //= {}
+  | if $addhooks then .hooks //= {} else . end
   | hook("UserPromptSubmit";   "think"; false)
   | hook("PreToolUse";         "tool";  true)
   | hook("PostToolUse";        "think"; true)
@@ -124,4 +142,8 @@ printf '\n'
 printf '\n'
 say "icons look like boxes or question marks? Install a Nerd Font (see README) or"
 say "add  \"env\": { \"SL_NERD\": \"0\" }  to $SETTINGS"
-say "open a new Claude Code session to see it live"
+if [ "$mode" = plugin ]; then
+  say "it shows up within a second or two in this session"
+else
+  say "open a new Claude Code session to see it live"
+fi
