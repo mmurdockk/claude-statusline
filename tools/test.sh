@@ -53,7 +53,9 @@ render "tool"   tool   feat/statusline "#42" approved Bash "46%" "107k free" "38
 render "think"  think  "#42" "Opus 5.5"
 render "idle"   idle   "#42" "4.82"
 render "asleep" asleep "z"
-render "party"  party  "3s" "✦"
+# The commit is "3s" old only if the second does not tick mid-render: the
+# sparkles are what tells a party apart.
+render "party"  party  "✦"
 SL_NERD=0      render "SL_NERD=0"      tool "gh feat/statusline" "PR #42"
 SL_POWERLINE=0 render "SL_POWERLINE=0" tool "│"
 SL_PATH=full   render "SL_PATH=full"   tool "dev/github.com/my-org/my-app"
