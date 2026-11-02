@@ -7,8 +7,8 @@
 **The status bar Claude Code deserves.**<br>
 Clawd lives in it. Your PR's CI status glows in it. Your quotas stop taking you by surprise.
 
-[![Release](https://img.shields.io/github/v/release/mmurdockk/claude-statusline?color=d77757)](https://github.com/mmurdockk/claude-statusline/releases)
-[![CI](https://github.com/mmurdockk/claude-statusline/actions/workflows/ci.yml/badge.svg)](https://github.com/mmurdockk/claude-statusline/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/mmurdockk/clawdline?color=d77757)](https://github.com/mmurdockk/clawdline/releases)
+[![CI](https://github.com/mmurdockk/clawdline/actions/workflows/ci.yml/badge.svg)](https://github.com/mmurdockk/clawdline/actions/workflows/ci.yml)
 [![Claude Code plugin](https://img.shields.io/badge/Claude_Code-plugin-d77757)](#-install)
 [![GitHub & GitLab](https://img.shields.io/badge/GitHub_%26_GitLab-PR%2FMR_%2B_CI-6e40c9)](#-github--gitlab-pr-and-live-ci)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -52,13 +52,13 @@ because it runs every second.
 **From your terminal**, in one step:
 
 ```bash
-claude plugin install clawdline --marketplace mmurdockk/claude-statusline
+claude plugin install clawdline --marketplace mmurdockk/clawdline
 ```
 
 **Or inside Claude Code:**
 
 ```
-/plugin marketplace add mmurdockk/claude-statusline
+/plugin marketplace add mmurdockk/clawdline
 /plugin install clawdline@clawdline
 ```
 
@@ -72,12 +72,12 @@ You need `jq` and a [Nerd Font](https://www.nerdfonts.com/) in your terminal
 <summary><b>Without the plugin system</b> (one curl, hooks written to <code>settings.json</code>)</summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mmurdockk/claude-statusline/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/mmurdockk/clawdline/main/install.sh | sh
 ```
 
-It clones the repo into `~/.claude/claude-statusline` and wires the status line and its hooks into
-`~/.claude/settings.json` (backed up first). Update with `git -C ~/.claude/claude-statusline pull`,
-remove with `~/.claude/claude-statusline/install.sh --uninstall`.
+It clones the repo into `~/.claude/clawdline` and wires the status line and its hooks into
+`~/.claude/settings.json` (backed up first). Update with `git -C ~/.claude/clawdline pull`,
+remove with `~/.claude/clawdline/install.sh --uninstall`.
 </details>
 
 <details>

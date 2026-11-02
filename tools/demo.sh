@@ -26,7 +26,7 @@ for b in jq git; do
 done
 export PATH
 
-box=$(mktemp -d "${TMPDIR:-/tmp}/claude-statusline-demo.XXXXXX")
+box=$(mktemp -d "${TMPDIR:-/tmp}/clawdline-demo.XXXXXX")
 trap 'rm -rf "$box"' EXIT
 export HOME="$box/home" TMPDIR="$box/tmp"
 mkdir -p "$HOME/.claude" "$TMPDIR"

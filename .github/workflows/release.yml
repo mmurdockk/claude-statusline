@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   release:
-    if: github.repository == 'mmurdockk/claude-statusline'
+    if: github.repository == 'mmurdockk/clawdline'
     name: Publish GitHub release
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +27,7 @@ jobs:
       - run: sh tools/test.sh
       - name: Package
         run: |
-          name="claude-statusline-${GITHUB_REF_NAME}"
+          name="clawdline-${GITHUB_REF_NAME}"
           git archive --format=tar.gz --prefix="$name/" -o "$name.tar.gz" HEAD
           sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
       - name: Create GitHub release
@@ -36,12 +36,12 @@ jobs:
           **Install or update** the Claude Code plugin, then run `/clawdline:setup` once:
 
           ```bash
-          claude plugin install clawdline --marketplace mmurdockk/claude-statusline
+          claude plugin install clawdline --marketplace mmurdockk/clawdline
           ```
 
-          Without the plugin system: `curl -fsSL https://raw.githubusercontent.com/mmurdockk/claude-statusline/main/install.sh | sh`
+          Without the plugin system: `curl -fsSL https://raw.githubusercontent.com/mmurdockk/clawdline/main/install.sh | sh`
           NOTES
-          gh release create "$GITHUB_REF_NAME" claude-statusline-*.tar.gz* \
+          gh release create "$GITHUB_REF_NAME" clawdline-*.tar.gz* \
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             --notes-file notes.md

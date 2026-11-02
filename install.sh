@@ -1,5 +1,5 @@
 #!/bin/sh
-# Wire claude-statusline into Claude Code: the status line, plus the six hooks that
+# Wire clawdline into Claude Code: the status line, plus the six hooks that
 # tell it what the current turn is doing. Everything runs from this checkout,
 # so `git pull` is the whole update story.
 #
@@ -11,8 +11,8 @@
 # settings.json is backed up next to itself before every change.
 #
 # Piped in rather than run from a checkout (curl ... | sh),
-# it first clones the repo into ~/.claude/claude-statusline (or pulls it), then runs
-# itself from there. CLAUDE_STATUSLINE_DIR and CLAUDE_STATUSLINE_REPO override the defaults.
+# it first clones the repo into ~/.claude/clawdline (or pulls it), then runs
+# itself from there. CLAWDLINE_DIR and CLAWDLINE_REPO override the defaults.
 set -eu
 
 CONF="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
@@ -26,13 +26,13 @@ die()  { printf '\033[38;2;248;81;73m✗\033[0m %s\n' "$*" >&2; exit 1; }
 DIR=$(cd "$(dirname "$0")" 2>/dev/null && pwd -P) || DIR=""
 if [ ! -f "$DIR/statusline.sh" ]; then
   command -v git >/dev/null 2>&1 || die "git is required"
-  dest=${CLAUDE_STATUSLINE_DIR:-$CONF/claude-statusline}
+  dest=${CLAWDLINE_DIR:-$CONF/clawdline}
   if [ -d "$dest/.git" ]; then
     say "updating $dest"
     git -C "$dest" pull -q --ff-only || die "could not update $dest"
   else
     say "cloning into $dest"
-    git clone -q "${CLAUDE_STATUSLINE_REPO:-https://github.com/mmurdockk/claude-statusline.git}" "$dest" \
+    git clone -q "${CLAWDLINE_REPO:-https://github.com/mmurdockk/clawdline.git}" "$dest" \
       || die "could not clone the repo (network? git credentials?)"
   fi
   exec /bin/sh "$dest/install.sh" "$@"

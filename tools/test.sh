@@ -17,7 +17,7 @@ skip() { printf '  \033[33mskip\033[0m  %s\n' "$*"; }
 plain() { sed "s/$E\[[0-9;]*m//g"; }
 has()  { case $1 in *"$2"*) return 0 ;; esac; return 1; }
 
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/claude-statusline-test.XXXXXX")
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/clawdline-test.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 SCRIPTS="statusline.sh statusline-turn.sh install.sh hooks/link.sh tools/demo.sh tools/test.sh"
 
