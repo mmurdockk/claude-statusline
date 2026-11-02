@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+# CI only reads the repo; don't rely on the repository's default token permissions.
+permissions:
+  contents: read
+
+jobs:
+  pinned:
+    name: Actions pinned to SHAs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Tags can be moved to point at different code; a commit SHA can't.
+      # Dependabot (github-actions) keeps the SHAs and version comments current.
+      - name: Check actions are pinned to commit SHAs
+        run: |
+          unpinned=$(grep -nE '^[[:space:]]*(-[[:space:]]*)?uses:[[:space:]]*[^.[:space:]][^@[:space:]]*@' .github/workflows/*.yml | grep -vE '@[0-9a-f]{40}([[:space:]]|$)' || true)
+          if [ -n "$unpinned" ]; then
+            echo "::error::Pin every action to a full commit SHA, with the version in a trailing comment:"
+            echo "$unpinned"
+            exit 1
+          fi
+
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # Linux runs the scripts under dash and has shellcheck; macOS is where
+        # most people run Claude Code, with BSD tools and its own /bin/dash.
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: jq --version && git --version
+      - run: sh tools/test.sh

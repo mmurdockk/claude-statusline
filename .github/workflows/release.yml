@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.repository == 'mmurdockk/claude-statusline'
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: sh tools/test.sh
+      - name: Package
+        run: |
+          name="claude-statusline-${GITHUB_REF_NAME}"
+          git archive --format=tar.gz --prefix="$name/" -o "$name.tar.gz" HEAD
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+      - name: Create GitHub release
+        run: |
+          cat > notes.md <<'NOTES'
+          **Install or update** (re-running it is safe):
+
+          ```bash
+          curl -fsSL https://raw.githubusercontent.com/mmurdockk/claude-statusline/main/install.sh | sh
+          ```
+
+          Already installed? `git -C ~/.claude/claude-statusline pull` is all it takes.
+          NOTES
+          gh release create "$GITHUB_REF_NAME" claude-statusline-*.tar.gz* \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}

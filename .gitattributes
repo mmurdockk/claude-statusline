@@ -1,0 +1,2 @@
+# Not part of what users download in a release tarball.
+.github export-ignore
