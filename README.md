@@ -144,7 +144,7 @@ whose result the render reads from a cache. The plugin's `SessionStart` hook kee
 
 Issues and pull requests are welcome. `tools/test.sh` runs the test suite (CI runs it on Linux and macOS),
 `tools/demo.sh [tool|think|idle|asleep|party]` renders the bar with fake data, and `uv run tools/animate.py` /
-`uv run tools/screenshot.py` regenerate the images. A release is just a tag: bump `version` in
+`uv run tools/screenshot.py` regenerate the README images (`uv run tools/showcase.py` the social ones). A release is just a tag: bump `version` in
 `.claude-plugin/plugin.json` and `marketplace.json`, then `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 MIT licensed. Made by [Adrien Gooris](https://github.com/mmurdockk).

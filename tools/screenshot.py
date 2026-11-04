@@ -33,23 +33,15 @@ def mix(a, b, t):
     return tuple(round(x + (y - x) * t) for x, y in zip(a, b))
 
 
-def ansi_to_html(line):
+def cells(line):
+    """One (char, fg, bg, bold, dim) per visible character of an ANSI line, so
+    a render can be sliced by terminal column."""
     fg = bg = None
     bold = dim = False
     out, pos = [], 0
 
     def emit(text):
-        if not text:
-            return
-        f = fg or TERM_FG
-        if dim:  # a terminal dims the ink, not the ground
-            f = mix(f, bg or TERM_BG, 0.45)
-        style = "color:rgb(%d,%d,%d)" % f
-        if bg:
-            style += ";background:rgb(%d,%d,%d)" % bg
-        if bold:
-            style += ";font-weight:bold"
-        out.append('<span style="%s">%s</span>' % (style, html.escape(text)))
+        out.extend((ch, fg, bg, bold, dim) for ch in text)
 
     for m in SGR.finditer(line):
         emit(line[pos:m.start()])
@@ -79,7 +71,30 @@ def ansi_to_html(line):
                 i += 4
             i += 1
     emit(line[pos:])
-    return "".join(out)
+    return out
+
+
+def cells_to_html(cs):
+    out = []
+    for (ch, fg, bg, bold, dim) in cs:
+        f = fg or TERM_FG
+        if dim:  # a terminal dims the ink, not the ground
+            f = mix(f, bg or TERM_BG, 0.45)
+        style = "color:rgb(%d,%d,%d)" % f
+        if bg:
+            style += ";background:rgb(%d,%d,%d)" % bg
+        if bold:
+            style += ";font-weight:bold"
+        span = '<span style="%s">' % style
+        if out and out[-1][0] == span:
+            out[-1][1].append(ch)
+        else:
+            out.append((span, [ch]))
+    return "".join("%s%s</span>" % (s, html.escape("".join(t))) for s, t in out)
+
+
+def ansi_to_html(line):
+    return cells_to_html(cells(line))
 
 
 PAGE = """<!doctype html><meta charset="utf-8">
