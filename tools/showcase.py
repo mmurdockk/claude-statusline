@@ -3,9 +3,10 @@
 
     uv run tools/showcase.py
 
-docs/showcase.gif        1080x1080, for social posts read on a phone: Clawd big,
-                         his mood as a caption, and line 1 of the bar wrapped
-                         onto two rows so it stays legible.
+docs/showcase.gif        1080x1080, for social posts read on a phone: the real
+                         bar, Clawd in it, zoomed in on its left end so it
+                         stays legible, then the rest of line 1 (model, what
+                         Claude is doing, the PR and its CI) further along.
 docs/social-preview.png  1280x640, for GitHub (Settings > Social preview).
 
 Same requirements as tools/animate.py, whose capture it reuses.
@@ -19,7 +20,9 @@ from screenshot import CHROME, FONT, ROOT, cells, cells_to_html
 
 GIF = ROOT / "docs" / "showcase.gif"
 PNG = ROOT / "docs" / "social-preview.png"
-MODEL_BG = (25, 56, 90)    # the model segment: line 1 wraps just before it
+MODEL_BG = (25, 56, 90)    # the model segment: "further along" starts there
+ZOOM_COLS = 41             # columns of the real bar the square shows, Clawd included
+ADVANCE = 0.602            # Hack's advance width, in em
 
 CSS = """
   html, body {{ margin: 0; padding: 0; background: transparent; }}
@@ -34,23 +37,37 @@ CSS = """
   .brand i {{ color: #d77757; font-style: normal; }}
   .muted {{ color: #8b949e; }}
   b.t {{ color: #d77757; }}
+  .win {{ background: #0d1117; border-radius: 10px; overflow: hidden;
+          box-shadow: 0 0 0 1px rgba(255,255,255,.09), 0 14px 34px rgba(0,0,0,.45); }}
+  .bar {{ height: 24px; background: #1b2028; display: flex; align-items: center; gap: 6px;
+          padding: 0 11px; font-size: 11px; color: #8b949e; }}
+  .dot {{ width: 9px; height: 9px; border-radius: 50%; }}
+  .fade {{ -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); }}
 """
 
-SQUARE = """<div class="bg" style="width:540px;height:540px;padding:26px 24px">
+DOTS = ('<span class="dot" style="background:#ff5f57"></span>'
+        '<span class="dot" style="background:#febc2e"></span>'
+        '<span class="dot" style="background:#28c840"></span>')
+
+# Rows are joined with no whitespace in between: .term is white-space: pre.
+SQUARE = """<div class="bg" style="width:540px;height:540px;padding:24px;display:flex;flex-direction:column">
   <div class="brand" style="font-size:19px">claw<i>d</i>line</div>
-  <div style="display:flex;justify-content:center;margin-top:46px">
-    <pre class="clawd" style="font-size:64px">{clawd}</pre>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div style="text-align:center;font-size:26px">Clawd is <b class="t">{caption}</b></div>
+    <div class="muted" style="text-align:center;font-size:14px;margin-top:6px">right in your Claude Code status bar</div>
+    <div class="win" style="margin-top:28px">
+      <div class="bar">{dots}<span style="flex:1;text-align:center;margin-right:40px">claude</span></div>
+      <div class="term fade" style="font-size:18.5px;padding:18px 16px 20px">{zoom}</div>
+    </div>
+    <div class="muted" style="text-align:center;font-size:13.5px;margin-top:28px">… and further along the same bar</div>
+    <div class="term" style="font-size:16px;margin-top:10px;text-align:center">{rest}</div>
   </div>
-  <div style="text-align:center;font-size:21px;margin-top:22px">Clawd is <b class="t">{caption}</b></div>
-  <div class="term" style="font-size:15.5px;margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:8px"><div>{row_a}</div><div>{row_b}</div></div>
-  <div class="muted" style="position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:13px">
-    github.com/mmurdockk/clawdline · Claude Code plugin · GitHub &amp; GitLab
-  </div>
+  <div class="muted" style="text-align:center;font-size:13px">github.com/mmurdockk/clawdline · Claude Code plugin · GitHub &amp; GitLab</div>
 </div>"""
 
 PREVIEW = """<div class="bg" style="width:1280px;height:640px;padding:0 72px;display:flex;flex-direction:column;justify-content:center">
   <div style="display:flex;align-items:center;gap:64px">
-    <pre class="clawd" style="font-size:74px">{clawd}</pre>
+    <pre class="clawd" style="font-size:66px">{clawd}</pre>
     <div>
       <div class="brand" style="font-size:76px;line-height:1">claw<i>d</i>line</div>
       <div style="font-size:30px;margin-top:14px;color:#e6edf3">The status bar Claude Code deserves.</div>
@@ -61,29 +78,29 @@ PREVIEW = """<div class="bg" style="width:1280px;height:640px;padding:0 72px;dis
       </div>
     </div>
   </div>
-  <!-- no whitespace between the rows: .term is white-space: pre -->
-  <div class="term" style="font-size:14px;margin-top:56px;padding:18px 22px;background:#0d1117;
-       border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.08)"><div>{l1}</div><div>{l2}</div><div>{l3}</div></div>
+  <div class="term" style="font-size:{size}px;margin-top:48px;padding:16px 20px;background:#0d1117;
+       border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.08)">{rows}</div>
 </div>"""
 
 
-def split(ansi):
-    """Demo output -> (Clawd's 3 rows incl. the z / sparkles gap, line 1, 2, 3)."""
-    rows = [cells(l) for l in ansi.split("\n") if l]
-    clawd = [r[1:13] for r in rows]           # column 0 is the anchor glyph
-    return clawd, rows[0][13:], rows[1][14:], rows[2][14:]
+def rows_of(ansi):
+    """Demo output -> its 3 rows as cells, minus the invisible anchor in column 0."""
+    return [cells(l)[1:] for l in ansi.split("\n") if l]
 
 
-def wrap(line1):
-    """Line 1 as two rows: directory and branch, then model onwards. The arrow
-    joining them closes row A instead, and row B starts on its own padding."""
+def clawd_of(rows):
+    return [r[:12] for r in rows]             # the sprite and its z / sparkles gap
+
+
+def rest_of_line1(rows):
+    """Line 1 from the model segment on, its joining arrow dropped."""
+    line1 = rows[0]
     i = next(k for k, c in enumerate(line1) if c[2] == MODEL_BG)
-    close = [("", line1[i][1], None, False, False)]
-    return line1[:i] + close, line1[i + 1:]
+    return line1[i + 1:]
 
 
-def clawd_html(rows):
-    return "\n".join(cells_to_html(r) for r in rows)
+def html_rows(rows):
+    return "".join("<div>%s</div>" % cells_to_html(r) for r in rows)
 
 
 def shoot(html, width, height, out):
@@ -101,11 +118,13 @@ def main():
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
 
-        # Social preview: Clawd standing, the bar mid-tool with a PR and CI.
-        clawd = split(shots["idle"][0][1])[0]
-        _, l1, l2, l3 = split(shots["tool"][0][1])
-        shoot(PREVIEW.format(clawd=clawd_html(clawd), l1=cells_to_html(l1),
-                             l2=cells_to_html(l2), l3=cells_to_html(l3)),
+        # Social preview: Clawd standing, big, and in the bar it lives in.
+        idle = rows_of(shots["idle"][0][1])
+        bar = rows_of(shots["tool"][0][1])
+        bar = [c[:12] + r[12:] for c, r in zip(clawd_of(idle), bar)]
+        size = min(14, round(1092 / (max(len(r) for r in bar) * ADVANCE), 1))
+        shoot(PREVIEW.format(clawd="\n".join(cells_to_html(r) for r in clawd_of(idle)),
+                             size=size, rows=html_rows(bar)),
               1280, 640, tmp / "preview.png")
         subprocess.run(["magick", str(tmp / "preview.png"), "-resize", "1280x640!", str(PNG)], check=True)
 
@@ -115,10 +134,10 @@ def main():
             seq += [(caption, a) for a in pick(shots[state], n, centre)]
         pages = []
         for caption, ansi in seq:
-            clawd, l1, _, _ = split(ansi)
-            a, b = wrap(l1)
-            pages.append(SQUARE.format(clawd=clawd_html(clawd), caption=caption,
-                                       row_a=cells_to_html(a), row_b=cells_to_html(b)))
+            rows = rows_of(ansi)
+            pages.append(SQUARE.format(caption=caption, dots=DOTS,
+                                       zoom=html_rows([r[:ZOOM_COLS] for r in rows]),
+                                       rest=cells_to_html(rest_of_line1(rows))))
         shoot("".join(pages), 540, 540 * len(seq), tmp / "strip.png")
         subprocess.run(["magick", str(tmp / "strip.png"), "-crop", "1080x1080", "+repage",
                         str(tmp / "f-%03d.png")], check=True)
